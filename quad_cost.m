@@ -7,8 +7,8 @@ function [c, c_term] = quad_cost(Q, R, Qf, target_state)
 % vector)
 
     function [c, cx, cu, cxx, cxu, cuu] = costfn(x, u)
-        err = (x - target_state).';  % transpose to match previous standard
-        c = 0.5 * (err' * Q * err + u' * R * u);
+        err = (x - target_state);  % untransposed -alex
+        c = 0.5 * (err.' * Q * err + u.' * R * u);
         cx = Q * err;
         cxx = Q;
         cxu = 0;
@@ -17,7 +17,7 @@ function [c, c_term] = quad_cost(Q, R, Qf, target_state)
     end
 
     function [c, cx, cxx] = term_costfn(x)
-        err = (x - target_state).';  % transposed again
+        err = (x - target_state);  % untransposed again
         c = 0.5 * (err' * Qf * err);
         cx = Qf * err;
         cxx = Qf;

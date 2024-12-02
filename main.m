@@ -1,25 +1,21 @@
 clear; clc; close all;
 
 % Given parameters
-x0 = [-3, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0];  % initial state
-xf = [5, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0];  % final state
-tf = 8;  % final time
+x0 = [-3, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % initial state
+xf = [5, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % final state
+tf = 6;  % final time
 dt = 0.01;  % time step
 
-% yield dynamical systems
-dynamics();
-
-% TODO: implement functions below
-dyn = @(state, control);
-% form: [next_state, fx, fu, fxx, fxu, fuu] = dyn(state, control)
+% set up dynamics
+dyn = full_quadrotor(dt);
 
 % Tune here!
 Q = eye(length(x0));
 R = eye(4);
-Qf = 500*Q;
+Qf = 100*Q;
 
-iters = 10;
-regularizer = 0.0;
+iters = 1000;
+regularizer = 0;
 mode = "ilqr";
 initial_controls = zeros(tf / dt, 4);  % 800-by-4
 ic = x0;
@@ -32,3 +28,15 @@ ic = x0;
 % run controller
 [controller, total_costs] = ddp(ic, initial_controls, iters, regularizer, dyn, costfn, term_costfn, mode);
 
+% Plot result
+xs = controller.states(:,1);
+ys = controller.states(:,2);
+zs = controller.states(:,3);
+
+figure(1)
+plot3(xs,ys,zs)
+hold on
+
+plot3(-3,-2,-1,"ro")
+plot3(5,3,2,"rx")
+legend(["Flight path","Start Point","Goal"])
