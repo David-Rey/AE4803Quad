@@ -3,21 +3,21 @@ clear; clc; close all;
 % Given parameters
 x0 = [-3, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % initial state
 xf = [5, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % final state
-tf = 6;  % final time
+tf = 8;  % final time
 dt = 0.01;  % time step
 
 % set up dynamics
 dyn = full_quadrotor(dt);
 
 % Tune here!
-Q = eye(length(x0));
-R = eye(4);
-Qf = 100*Q;
+Q = 1*eye(length(x0));
+R = 0.01*eye(4);
+Qf = 6*eye(length(x0));
 
-iters = 1000;
-regularizer = 0;
-mode = "ilqr";
-initial_controls = zeros(tf / dt, 4);  % 800-by-4
+iters = 10;
+regularizer = 1;
+mode = "ddp";
+initial_controls = 0.612*ones(tf / dt, 4);  % initialize to neutral thrust
 ic = x0;
 
 % get cost functions
@@ -40,3 +40,11 @@ hold on
 plot3(-3,-2,-1,"ro")
 plot3(5,3,2,"rx")
 legend(["Flight path","Start Point","Goal"])
+
+figure(2)
+plot(controller.controls(:,1))
+hold on
+plot(controller.controls(:,2))
+plot(controller.controls(:,3))
+plot(controller.controls(:,4))
+legend(["u1","u2","u3","u4"])

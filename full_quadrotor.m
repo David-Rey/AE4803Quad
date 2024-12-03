@@ -94,6 +94,13 @@ function [wrapper_f, wrapper_fx, wrapper_fu, wrapper_fxx, wrapper_fxu, wrapper_f
     u3 = control(3);
     u4 = control(4);
 
+    % Clamp controls
+    bound = 10; % N
+    u1 = clip(u1,-bound,bound);
+    u2 = clip(u2,-bound,bound);
+    u3 = clip(u3,-bound,bound);
+    u4 = clip(u4,-bound,bound);
+
     wrapper_f = num_f(x,y,z,phi,theta,psi,vx,vy,vz,p,q,r,u1,u2,u3,u4);
     wrapper_fx = num_fx(x,y,z,phi,theta,psi,vx,vy,vz,p,q,r,u1,u2,u3,u4);
     wrapper_fu = num_fu(x,y,z,phi,theta,psi,vx,vy,vz,p,q,r,u1,u2,u3,u4);
