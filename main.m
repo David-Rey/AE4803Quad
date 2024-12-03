@@ -10,12 +10,17 @@ dt = 0.01;  % time step
 dyn = full_quadrotor(dt);
 
 % Tune here!
+% Q = 0.244*eye(length(x0));
+% R = 112.1*eye(4);
+% Qf = 37*eye(length(x0));
 Q = 0.244*eye(length(x0));
 R = 112.1*eye(4);
 Qf = 37*eye(length(x0));
 
-iters = 10;
-regularizer = 1;
+iters = 15;
+%regularizer = 1;
+% iters = 5;
+regularizer = 0.1;
 mode = "ddp";
 initial_controls = 0.612*ones(tf / dt, 4);  % initialize to neutral thrust
 ic = x0;
@@ -40,10 +45,13 @@ zs = controller.states(:,3);
 figure(1)
 title("Position")
 plot3(xs,ys,zs)
+xlabel("X")
+ylabel("Y")
+zlabel("Z")
 hold on
 
-plot3(-3,-2,-1,"ro")
-plot3(5,3,2,"rx")
+plot3(-3,-2,-1,"ro") %Initial
+plot3(5,3,2,"rx") %Final
 legend(["Flight path","Start Point","Goal"])
 
 figure(2)

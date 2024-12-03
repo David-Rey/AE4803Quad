@@ -1,4 +1,4 @@
-function [controller, V] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode)
+ function [controller, V] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode)
 %BACK_PASS The backward pass of iLQR / DDP.
 %
 %   states: A tf-by-n matrix where the row t contains the state of the
@@ -94,6 +94,7 @@ controller.controls = controls;
 next_P = Q;
 next_p = Q*(states(horizon,:).') - states(horizon,:)*cx;
 
+
 % Initialize final Vx
 [~, cx, cxx] = term_costfn(states(horizon,:).');
 Vx_next = cx;
@@ -114,7 +115,7 @@ for t = horizon:-1:1
         Qxu = cxu + (fx.')*Vxx_next*fu + fake_tensor_prod(Vx_next,fxu) + regularizer*(fx.')*(fu);
         Qux = Qxu.';
         Quu = cuu + (fu.')*Vxx_next*fu + fake_tensor_prod(Vx_next,fuu) + regularizer*(fu.')*(fu);
-        
+
     elseif strcmp(mode,'ilqr')
         % Get second-order derivatives of Q without tensor prod
         Qxx = cxx + (fx.')*Vxx_next*fx;
@@ -137,6 +138,8 @@ for t = horizon:-1:1
 end
 
 
+
+
 V = 0; % don't bother defining V
 end
 
@@ -148,3 +151,89 @@ function out = fake_tensor_prod(A,B)
     out = out/3;
 end
 
+%% Fill in your code below
+%{
+%ILQR
+%Determine final cost at last time t
+%[cost, cx, cxx] = term_costfn(states(end,:)');
+[~, cx, ~, Q, ~, ~] = costfn(states(horizon,:).', controls(horizon,:).');
+
+
+%Initial value is the final state (work backwards)
+P_plus_1 = Q; %Initial Value = Final State Q
+p_plus_1 = Q*(states(horizon,:).') - states(horizon,:)*cx; %Initial Value = Final State q
+
+%DDP
+%Initial value is the final state (work backwards)
+[cost, cx, cxx] = term_costfn(states(horizon, :).');
+V = cost;
+Vx = cx;
+Vxx = cxx;
+
+
+% [~, cx, ~, Q, ~, ~] = costfn(states(horizon,:).', controls(horizon,:).');
+% next_P = Q;
+% next_p = Q*(states(horizon,:).') - states(horizon,:)*cx;
+% 
+% 
+% % Initialize final Vx
+% [~, cx, cxx] = term_costfn(states(horizon,:).');
+% Vx_next = cx;
+% Vxx_next = cxx;
+
+for t = horizon:-1:1
+
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %DDP Without Tensor Products = ILQR
+    %Determine cost derivatives at time t
+    [cost, cx, cu, cxx, cxu, cuu] = costfn(states(t,:)', controls(t,:)');
+
+    %Determine state derivatives at time t
+    [f, fx, fu, fxx, fxu, fuu] = dyn(states(t,:)', controls(t,:)');
+    
+    %Solve for Q functions
+    Qx = cx + fx' * Vx - regularizer*(fx.')*(states(t+1,:).' - f);
+    Qu = cu + fu' * Vx - regularizer*(fu.')*(states(t+1,:).' - f);
+
+    Qxx = cxx + fx'*Vxx*fx;
+    Qxu = cxu + fx'*Vxx*fu;
+    Quu = cuu + fu'*Vxx*fu;
+
+    %Add tensor product terms for DDP
+    if strcmp(mode, 'ddp')
+        for i = 1:n
+            Qxx = Qxx + Vx(i) * squeeze(fxx(i,:,:));
+            Qxu = Qxu + Vx(i) * squeeze(fxu(i,:,:));
+            Quu = Quu + Vx(i) * squeeze(fuu(i,:,:));
+        end
+        % Add regularization after tensor terms
+        Qxx = Qxx + regularizer * (fx.') * fx;
+        Qxu = Qxu + regularizer * (fx.') * fu;
+        Quu = Quu + regularizer * (fu.') * fu;
+    end
+
+    Qux = Qxu'; %Basic transpose property
+
+    %Regularizer
+    %Quu = Quu + regularizer * eye(m);
+
+    %Solve for K and k
+    K = -Quu \ Qux;
+    k = -Quu \ Qu;
+
+    %Find new Vx and Vxx for next iteration
+    Vx = Qx - K'*Quu*k;
+    Vxx = Qxx - K'*Quu*K;
+
+    %Save K and k in struc
+    controller.K(t,:, :) = K;
+    controller.k(t, :) = k;
+
+    %Value function adds all costs at each step to find value at t = 0
+    V = V + cost;
+    
+
+end
+end
+%}

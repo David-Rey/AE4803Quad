@@ -57,7 +57,7 @@ total_costs = zeros(iters, 1);
 for i = 1:iters
     [controller, ~] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode);
     [states, controls, costs] = fwd_pass(ic, controller, dyn, costfn, term_costfn);
-    total_costs(i,1) = norm(costs);
+    total_costs(i,1) = norm(costs); %maybe sum(costs)
 end
 
 end
