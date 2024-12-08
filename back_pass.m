@@ -104,25 +104,36 @@ for t = horizon:-1:1
     % Evaluate cost and function
     [~, cx, cu, cxx, cxu, cuu] = costfn(states(t,:).', controls(t,:).');
     [f, fx, fu, fxx, fxu, fuu] = dyn(states(t,:).', controls(t,:).');
+    
+    % automatically increment regularizer if Quu not invertible
+    while true
+        % Get first-order derivatives of Q
+        Qx = cx + (fx.')*Vx_next - regularizer*(fx.')*(states(t+1,:).' - f);
+        Qu = cu + (fu.')*Vx_next - regularizer*(fu.')*(states(t+1,:).' - f);
+    
+        if strcmp(mode, 'ddp')
+            % Get second-order derivatives of Q
+            Qxx = cxx + (fx.')*Vxx_next*fx + fake_tensor_prod(Vx_next,fxx) + regularizer*(fx.')*fx;
+            Qxu = cxu + (fx.')*Vxx_next*fu + fake_tensor_prod(Vx_next,fxu) + regularizer*(fx.')*(fu);
+            Qux = Qxu.';
+            Quu = cuu + (fu.')*Vxx_next*fu + fake_tensor_prod(Vx_next,fuu) + regularizer*(fu.')*(fu);
+    
+        elseif strcmp(mode,'ilqr')
+            % Get second-order derivatives of Q without tensor prod
+            Qxx = cxx + (fx.')*Vxx_next*fx;
+            Qxu = cxu + (fx.')*Vxx_next*fu;
+            Qux = Qxu.';
+            Quu = cuu + (fu.')*Vxx_next*fu;
+        end
 
-    % Get first-order derivatives of Q
-    Qx = cx + (fx.')*Vx_next - regularizer*(fx.')*(states(t+1,:).' - f);
-    Qu = cu + (fu.')*Vx_next - regularizer*(fu.')*(states(t+1,:).' - f);
+        % check if Quu is positive definite
+        if all(eig(Quu) > 0)
+            break
+        end
+        % otherwise, increment regularizer
+        regularizer = regularizer * 2
 
-    if strcmp(mode, 'ddp')
-        % Get second-order derivatives of Q
-        Qxx = cxx + (fx.')*Vxx_next*fx + fake_tensor_prod(Vx_next,fxx) + regularizer*(fx.')*fx;
-        Qxu = cxu + (fx.')*Vxx_next*fu + fake_tensor_prod(Vx_next,fxu) + regularizer*(fx.')*(fu);
-        Qux = Qxu.';
-        Quu = cuu + (fu.')*Vxx_next*fu + fake_tensor_prod(Vx_next,fuu) + regularizer*(fu.')*(fu);
-
-    elseif strcmp(mode,'ilqr')
-        % Get second-order derivatives of Q without tensor prod
-        Qxx = cxx + (fx.')*Vxx_next*fx;
-        Qxu = cxu + (fx.')*Vxx_next*fu;
-        Qux = Qxu.';
-        Quu = cuu + (fu.')*Vxx_next*fu;
-    end
+    end % while true loop
 
     % Get new controls
     K = -inv(Quu)*Qux;
