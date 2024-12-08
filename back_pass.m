@@ -131,7 +131,7 @@ for t = horizon:-1:1
             break
         end
         % otherwise, increment regularizer
-        regularizer = regularizer * 2
+        regularizer = regularizer+0.01 * 2
 
     end % while true loop
 

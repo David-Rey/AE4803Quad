@@ -13,14 +13,18 @@ dyn = full_quadrotor(dt);
 % Q = 0.244*eye(length(x0));
 % R = 112.1*eye(4);
 % Qf = 37*eye(length(x0));
-Q = 0.244*eye(length(x0));
-R = 112.1*eye(4);
-Qf = 37*eye(length(x0));
 
-iters = 15;
-%regularizer = 1;
-% iters = 5;
-regularizer = 0.1;
+pos_gain = 100;
+vel_gain = 100;
+ang_gain = 10;
+ang_vel_gain = 10;
+Q = diag([pos_gain, pos_gain, pos_gain, vel_gain, vel_gain, vel_gain, ang_gain, ang_gain, ang_gain, ang_vel_gain, ang_vel_gain, ang_vel_gain]);
+R = 15*eye(4);
+Qf = 100*Q;
+
+iters = 10;
+regularizer = 1;  % initial value. Will increment automatically unless this is 0
+line_search_iters = 10;
 mode = "ddp";
 initial_controls = 0.612*ones(tf / dt, 4);  % initialize to neutral thrust
 ic = x0;
@@ -31,7 +35,7 @@ ic = x0;
 % form: [cost, cx, cxx] = term_costfn(state)
 
 % run controller
-[controller, total_costs] = ddp(ic, initial_controls, iters, regularizer, dyn, costfn, term_costfn, mode);
+[controller, total_costs] = ddp(ic, initial_controls, iters, regularizer, dyn, costfn, term_costfn, mode, line_search_iters);
 
 total_costs(end)
 final_cost = norm(controller.states(end,:) - xf)
@@ -45,13 +49,10 @@ zs = controller.states(:,3);
 figure(1)
 title("Position")
 plot3(xs,ys,zs)
-xlabel("X")
-ylabel("Y")
-zlabel("Z")
 hold on
 
-plot3(-3,-2,-1,"ro") %Initial
-plot3(5,3,2,"rx") %Final
+plot3(-3,-2,-1,"ro")
+plot3(5,3,2,"rx")
 legend(["Flight path","Start Point","Goal"])
 
 figure(2)
