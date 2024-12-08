@@ -1,4 +1,4 @@
-function [states, controls, costs] = fwd_pass(ic, controller, dynamics_wrapper, costfn, term_costfn)
+function [states, controls, costs] = fwd_pass(ic, controller, dynamics_wrapper, costfn, term_costfn, alpha)
 %FWD_PASS Forward Pass for iLQR / DDP.
 %   This function computes the forward pass for the current control law.
 %
@@ -50,6 +50,8 @@ function [states, controls, costs] = fwd_pass(ic, controller, dynamics_wrapper, 
 %   time step t. Note that costs(end) (i.e., costs(tf)) should contain the
 %   value of the terminal cost function.
 
+% alpha: step size float
+
 % Setup Variables
 tf = size(controller.k, 1);
 n = size(ic, 1);
@@ -70,7 +72,7 @@ for t = 1:tf
     xbar = controller.states(t,:);  % current xbar
     ubar = controller.controls(t,:);  % current ubar
     K = squeeze(controller.K(t,:,:));  % current K
-    k = (controller.k(t,:));  % current k
+    k = alpha * (controller.k(t,:));  % current k given step size
     control = ubar + (K * (state.' - xbar.')).' + k;
     controls(t,:) = control;  % append
     
