@@ -1,4 +1,4 @@
-function [controller, total_costs] = ddp(ic, initial_controls, iters, regularizer, dyn, costfn, term_costfn, mode, line_search_iters)
+function [controller, total_costs] = ddp(ic, initial_controls, iters, regularizer, dyn, costfn, term_costfn, mode, line_search_iters, xf)
 %DDP Solves for a locally optimal controller using iLQR / DDP.
 %
 %   ic: An n-by-1 state serving as the initial condition for the control
@@ -55,14 +55,14 @@ alphas = 1:-1/line_search_iters:0;  % decreasing step size sequence
 
 %% Your code below
 
-[states, controls, last_costs] = fwd_pass(ic, controller, dyn, costfn, term_costfn, alphas(1));
+[states, controls, last_costs] = fwd_pass(ic, controller, dyn, costfn, term_costfn, alphas(1), xf);
 
 for i = 1:iters
-    [controller, ~] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode);
+    [controller, ~] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode, xf);
     
     for j = 1:line_search_iters
         % line search logic
-        [states, controls, new_costs] = fwd_pass(ic, controller, dyn, costfn, term_costfn, alphas(j+1));
+        [states, controls, new_costs] = fwd_pass(ic, controller, dyn, costfn, term_costfn, alphas(j+1), xf);
         if sum(new_costs) < sum(last_costs)
             break
         end

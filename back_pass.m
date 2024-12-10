@@ -1,4 +1,4 @@
- function [controller, V] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode)
+ function [controller, V] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode, xf)
 %BACK_PASS The backward pass of iLQR / DDP.
 %
 %   states: A tf-by-n matrix where the row t contains the state of the
@@ -90,19 +90,21 @@ controller.controls = controls;
 %% Fill in your code below
 
 % Initialize with final values
-[~, cx, ~, Q, ~, ~] = costfn(states(horizon,:).', controls(horizon,:).');
+barrier_func = get_barrier_func();
+w = barrier_func(states(horizon, :)) - barrier_func(xf);
+[~, cx, ~, Q, ~, ~] = costfn(states(horizon,:).', controls(horizon,:).', w);
 next_P = Q;
 next_p = Q*(states(horizon,:).') - states(horizon,:)*cx;
 
 
 % Initialize final Vx
-[~, cx, cxx] = term_costfn(states(horizon,:).');
+[~, cx, cxx] = term_costfn(states(horizon,:).', w);
 Vx_next = cx;
 Vxx_next = cxx;
 
 for t = horizon:-1:1
     % Evaluate cost and function
-    [~, cx, cu, cxx, cxu, cuu] = costfn(states(t,:).', controls(t,:).');
+    [~, cx, cu, cxx, cxu, cuu] = costfn(states(t,:).', controls(t,:).', w);
     [f, fx, fu, fxx, fxu, fuu] = dyn(states(t,:).', controls(t,:).');
     
     % automatically increment regularizer if Quu not invertible

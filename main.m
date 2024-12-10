@@ -30,12 +30,16 @@ initial_controls = 0.612*ones(tf / dt, 4);  % initialize to neutral thrust
 ic = x0;
 
 % get cost functions
-[costfn, term_costfn] = quad_cost(Q, R, Qf, xf);
-% form: [cost, cx, cu, cxx, cxu, cuu] = costfn(state, control)
-% form: [cost, cx, cxx] = term_costfn(state)
+[costfn, term_costfn] = quad_cost_barrier(Q, R, Qf, xf);
+% form: [cost, cx, cu, cxx, cxu, cuu] = costfn(state, control, w)
+% form: [cost, cx, cxx] = term_costfn(state, w)
+
+% get barrier function related values
+% barrier_func = get_barrier_func();  % fn handle
+% w0 = barrier_func(x0) - barrier_func(xf);
 
 % run controller
-[controller, total_costs] = ddp(ic, initial_controls, iters, regularizer, dyn, costfn, term_costfn, mode, line_search_iters);
+[controller, total_costs] = ddp(ic, initial_controls, iters, regularizer, dyn, costfn, term_costfn, mode, line_search_iters, xf);
 
 total_costs(end)
 final_cost = norm(controller.states(end,:) - xf)

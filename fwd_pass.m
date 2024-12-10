@@ -1,4 +1,4 @@
-function [states, controls, costs] = fwd_pass(ic, controller, dynamics_wrapper, costfn, term_costfn, alpha)
+function [states, controls, costs] = fwd_pass(ic, controller, dynamics_wrapper, costfn, term_costfn, alpha, xf)
 %FWD_PASS Forward Pass for iLQR / DDP.
 %   This function computes the forward pass for the current control law.
 %
@@ -63,6 +63,11 @@ costs = zeros(tf + 1, 1);
 
 states(1, :) = ic.';
 
+% barrier state logic
+barrier_states = zeros(tf+1,1);
+barrier_func = get_barrier_func();
+barrier_states(1) = barrier_func(ic) - barrier_func(xf);
+
 %% Your Code Below
 
 
@@ -77,14 +82,18 @@ for t = 1:tf
     controls(t,:) = control;  % append
     
     % calculate cost this step
-    [cost, cx, cu, cxx, cxu, cuu] = costfn(state.', control.');
+    w = barrier_func(state) - barrier_func(xf);
+    [cost, cx, cu, cxx, cxu, cuu] = costfn(state.', control.', w);
     costs(t) = cost;
     
     % get next state from dynamics
+    % TODO: why propagate barrier_state if we don't use its gradient??
     [next_state, fx, fu, fxx, fxu, fuu] = dynamics_wrapper(state.', control.');
+    next_barrier_state = barrier_func(next_state) - barrier_func(xf);
     states(t+1,:) = next_state.';
+    barrier_states(t+1) = next_barrier_state;
 end
-[tcost, tcx, tcxx] = term_costfn(state.');
+[tcost, tcx, tcxx] = term_costfn(state.', w);
 costs(end) = tcost;
 
 end
