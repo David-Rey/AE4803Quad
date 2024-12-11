@@ -104,19 +104,20 @@ for t = horizon:-1:1
     % Evaluate cost and function
     [~, cx, cu, cxx, cxu, cuu] = costfn(states(t,:).', controls(t,:).');
     [f, fx, fu, fxx, fxu, fuu] = dyn(states(t,:).', controls(t,:).');
+    reg = regularizer;
     
     % automatically increment regularizer if Quu not invertible
-    while true
+    for i = 1:5
         % Get first-order derivatives of Q
-        Qx = cx + (fx.')*Vx_next - regularizer*(fx.')*(states(t+1,:).' - f);
-        Qu = cu + (fu.')*Vx_next - regularizer*(fu.')*(states(t+1,:).' - f);
+        Qx = cx + (fx.')*Vx_next - reg*(fx.')*(states(t+1,:).' - f);
+        Qu = cu + (fu.')*Vx_next - reg*(fu.')*(states(t+1,:).' - f);
     
         if strcmp(mode, 'ddp')
             % Get second-order derivatives of Q
-            Qxx = cxx + (fx.')*Vxx_next*fx + fake_tensor_prod(Vx_next,fxx) + regularizer*(fx.')*fx;
-            Qxu = cxu + (fx.')*Vxx_next*fu + fake_tensor_prod(Vx_next,fxu) + regularizer*(fx.')*(fu);
+            Qxx = cxx + (fx.')*Vxx_next*fx + fake_tensor_prod(Vx_next,fxx) + reg*(fx.')*fx;
+            Qxu = cxu + (fx.')*Vxx_next*fu + fake_tensor_prod(Vx_next,fxu) + reg*(fx.')*(fu);
             Qux = Qxu.';
-            Quu = cuu + (fu.')*Vxx_next*fu + fake_tensor_prod(Vx_next,fuu) + regularizer*(fu.')*(fu);
+            Quu = cuu + (fu.')*Vxx_next*fu + fake_tensor_prod(Vx_next,fuu) + reg*(fu.')*(fu);
     
         elseif strcmp(mode,'ilqr')
             % Get second-order derivatives of Q without tensor prod
@@ -127,17 +128,17 @@ for t = horizon:-1:1
         end
 
         % check if Quu is positive definite
-        if all(eig(Quu) > 0)
+        if all(eig(Quu) > 1e-6) && rcond(Quu) > 1e-8
             break
         end
         % otherwise, increment regularizer
-        regularizer = regularizer+0.01 * 2
+        reg = (reg+0.01) * 2
 
-    end % while true loop
+    end % regularizer update loop
 
     % Get new controls
-    K = -inv(Quu)*Qux;
-    k = -inv(Quu)*Qu;
+    K = -Quu \ Qux;
+    k = -Quu \ Qu;
 
     % Get new value function
     Vx_next = Qx - (K.')*Quu*k;
@@ -148,10 +149,7 @@ for t = horizon:-1:1
     controller.k(t,:,:) = k;
 end
 
-
-
-
-V = 0; % don't bother defining V
+V = -0.5 * (Qu.' * pinv(Quu) * Qu);  % cost to go
 end
 
 function out = fake_tensor_prod(A,B)

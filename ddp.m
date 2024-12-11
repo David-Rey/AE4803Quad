@@ -51,25 +51,25 @@ controller.controls = initial_controls;
 
 total_costs = zeros(iters, 1);
 
-alphas = 1:-1/line_search_iters:0;  % decreasing step size sequence
+% alphas = 1:-1/line_search_iters:0;  % decreasing step size sequence
+alphas = exp(-(0:line_search_iters));
 
 %% Your code below
 
-[states, controls, last_costs] = fwd_pass(ic, controller, dyn, costfn, term_costfn, alphas(1));
+[states, controls, best_costs] = fwd_pass(ic, controller, dyn, costfn, term_costfn, alphas(1));
 
 for i = 1:iters
     [controller, ~] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode);
     
-    for j = 1:line_search_iters
+    for j = 1:line_search_iters-1
         % line search logic
         [states, controls, new_costs] = fwd_pass(ic, controller, dyn, costfn, term_costfn, alphas(j+1));
-        if sum(new_costs) < sum(last_costs)
-            break
+        if sum(new_costs) < sum(best_costs)
+            best_costs = new_costs;
         end
-        last_costs = new_costs;
     end
 
-    total_costs(i,1) = sum(new_costs); 
+    total_costs(i,1) = sum(best_costs); 
 end
 
 end

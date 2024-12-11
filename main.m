@@ -10,8 +10,8 @@ dt = 0.01;  % time step
 dyn = full_quadrotor(dt);
 
 % Tune here!
-% Q = 0.244*eye(length(x0));
-% R = 112.1*eye(4);
+% Q = 100.244*eye(length(x0));
+% R = 12.1*eye(4);
 % Qf = 37*eye(length(x0));
 
 pos_gain = 100;
@@ -19,12 +19,12 @@ vel_gain = 100;
 ang_gain = 10;
 ang_vel_gain = 10;
 Q = diag([pos_gain, pos_gain, pos_gain, vel_gain, vel_gain, vel_gain, ang_gain, ang_gain, ang_gain, ang_vel_gain, ang_vel_gain, ang_vel_gain]);
-R = 15*eye(4);
-Qf = 100*Q;
+R = 1*eye(4);
+Qf = 10*Q;
 
 iters = 10;
 regularizer = 1;  % initial value. Will increment automatically unless this is 0
-line_search_iters = 10;
+line_search_iters = 10;  % don't line search
 mode = "ddp";
 initial_controls = 0.612*ones(tf / dt, 4);  % initialize to neutral thrust
 ic = x0;
@@ -41,7 +41,7 @@ total_costs(end)
 final_cost = norm(controller.states(end,:) - xf)
 
 
-% Plot result
+%% Plot result
 xs = controller.states(:,1);
 ys = controller.states(:,2);
 zs = controller.states(:,3);
