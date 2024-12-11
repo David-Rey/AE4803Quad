@@ -19,12 +19,12 @@ vel_gain = 100;
 ang_gain = 10;
 ang_vel_gain = 10;
 Q = diag([pos_gain, pos_gain, pos_gain, vel_gain, vel_gain, vel_gain, ang_gain, ang_gain, ang_gain, ang_vel_gain, ang_vel_gain, ang_vel_gain]);
-R = 1*eye(4);
-Qf = 10*Q;
+R = .01*eye(4);
+Qf = 100*Q;
 
 iters = 10;
-regularizer = 1;  % initial value. Will increment automatically unless this is 0
-line_search_iters = 10;  % don't line search
+regularizer = 0;  % initial value. Will increment automatically unless this is 0
+line_search_iters = 1;  % 1 for no line search
 mode = "ddp";
 initial_controls = 0.612*ones(tf / dt, 4);  % initialize to neutral thrust
 ic = x0;

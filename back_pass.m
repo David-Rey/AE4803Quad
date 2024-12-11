@@ -114,10 +114,10 @@ for t = horizon:-1:1
     
         if strcmp(mode, 'ddp')
             % Get second-order derivatives of Q
-            Qxx = cxx + (fx.')*Vxx_next*fx + fake_tensor_prod(Vx_next,fxx) + reg*(fx.')*fx;
-            Qxu = cxu + (fx.')*Vxx_next*fu + fake_tensor_prod(Vx_next,fxu) + reg*(fx.')*(fu);
+            Qxx = cxx + (fx.')*Vxx_next*fx + fake_tensor_prod(Vx_next,fxx);% + reg*(fx.')*fx;
+            Qxu = cxu + (fx.')*(Vxx_next + reg * eye(length(Qxx)))*fu + fake_tensor_prod(Vx_next,fxu);
             Qux = Qxu.';
-            Quu = cuu + (fu.')*Vxx_next*fu + fake_tensor_prod(Vx_next,fuu) + reg*(fu.')*(fu);
+            Quu = cuu + (fu.')*(Vxx_next + reg * eye(length(Qxx)))*fu + fake_tensor_prod(Vx_next,fuu);
     
         elseif strcmp(mode,'ilqr')
             % Get second-order derivatives of Q without tensor prod
@@ -131,8 +131,16 @@ for t = horizon:-1:1
         if all(eig(Quu) > 1e-6) && rcond(Quu) > 1e-8
             break
         end
+        if reg == 0 || isinf(reg)
+            disp('Reg 0 or inf');
+            break
+        end
+        if isnan(rcond(Quu))
+            disp('NaN rcond(Quu)');
+            break
+        end
         % otherwise, increment regularizer
-        reg = (reg+0.01) * 2
+        reg = reg * 2
 
     end % regularizer update loop
 

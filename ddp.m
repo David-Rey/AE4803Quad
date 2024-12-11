@@ -69,6 +69,8 @@ for i = 1:iters
         end
     end
 
+    % update to a newer controller
+    [controller, ~] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode);
     total_costs(i,1) = sum(best_costs); 
 end
 
