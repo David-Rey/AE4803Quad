@@ -115,18 +115,19 @@ function [wrapper_f, wrapper_fx, wrapper_fu, wrapper_fxx, wrapper_fxu, wrapper_f
     u3 = clip(u3,-bound,bound);
     u4 = clip(u4,-bound,bound);
 
-    wrapper_f = num_f(x,y,z,phi,theta,psi,vx,vy,vz,p,q,r,u1,u2,u3,u4);
-    wrapper_fx = num_fx(x,y,z,phi,theta,psi,vx,vy,vz,p,q,r,u1,u2,u3,u4);
-    wrapper_fu = num_fu(x,y,z,phi,theta,psi,vx,vy,vz,p,q,r,u1,u2,u3,u4);
+    wrapper_f = num_f(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,u1,u2,u3,u4);
+    wrapper_fx = num_fx(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,u1,u2,u3,u4);
+    wrapper_fu = num_fu(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,u1,u2,u3,u4);
+	%wrapper_f = num_f(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,u1,u2,u3,u4);
 
     wrapper_fxx = zeros(12, 12, 12);
     wrapper_fxu = zeros(12, 12, 4);
     wrapper_fuu = zeros(12, 4, 4);
 
     for i = 1:12
-        wrapper_fxx(i, :, :) = num_fxx{i}(x,y,z,phi,theta,psi,vx,vy,vz,p,q,r,u1,u2,u3,u4);
-        wrapper_fxu(i, :, :) = num_fxu{i}(x,y,z,phi,theta,psi,vx,vy,vz,p,q,r,u1,u2,u3,u4);
-        wrapper_fuu(i, :, :) = num_fuu{i}(x,y,z,phi,theta,psi,vx,vy,vz,p,q,r,u1,u2,u3,u4);
+        wrapper_fxx(i, :, :) = num_fxx{i}(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,u1,u2,u3,u4);
+        wrapper_fxu(i, :, :) = num_fxu{i}(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,u1,u2,u3,u4);
+        wrapper_fuu(i, :, :) = num_fuu{i}(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,u1,u2,u3,u4);
     end
 end
 
