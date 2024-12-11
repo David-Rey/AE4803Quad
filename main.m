@@ -14,17 +14,17 @@ dyn = full_quadrotor(dt);
 % R = 12.1*eye(4);
 % Qf = 37*eye(length(x0));
 
-pos_gain = 100;
-vel_gain = 100;
-ang_gain = 10;
-ang_vel_gain = 10;
+pos_gain = 1;
+vel_gain = 1;
+ang_gain = 1;
+ang_vel_gain = 1;
 Q = diag([pos_gain, pos_gain, pos_gain, vel_gain, vel_gain, vel_gain, ang_gain, ang_gain, ang_gain, ang_vel_gain, ang_vel_gain, ang_vel_gain]);
-R = 1*eye(4);
-Qf = 100*Q;
+R = 0.8*eye(4);
+Qf = 180*Q;
 
-iters = 10;
+iters = 13;
 regularizer = 1;  % initial value. Will increment automatically unless this is 0
-line_search_iters = 10;  % 1 for no line search
+line_search_iters = 3;  % 1 for no line search
 mode = "ddp";
 initial_controls = 1.225*ones(tf / dt, 4);  % initialize to neutral thrust
 ic = x0;
@@ -54,6 +54,8 @@ hold on
 plot3(-3,-2,-1,"ro")
 plot3(5,3,2,"rx")
 legend(["Flight path","Start Point","Goal"])
+axis("equal")
+grid("on")
 
 figure(2)
 title("Controls")

@@ -60,15 +60,15 @@ alphas = exp(-(0:line_search_iters));
 
 for i = 1:iters
     [controller, ~] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode);
-    
+    disp(sum(best_costs))
     for j = 1:line_search_iters-1
         % line search logic
-        [states, controls, new_costs] = fwd_pass(ic, controller, dyn, costfn, term_costfn, alphas(j+1));
+        [states, controls, new_costs] = fwd_pass(ic, controller, dyn, costfn, term_costfn, alphas(j));
         if sum(new_costs) < sum(best_costs)
             best_costs = new_costs;
         end
-    end
-
+	end
+	
     % update to a newer controller
     [controller, ~] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode);
     total_costs(i,1) = sum(best_costs); 

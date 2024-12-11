@@ -75,6 +75,14 @@ if nargin < 6
     regularizer = 0;
 end
 
+initial_mu = 1e-2;
+delta_0 = 2;
+
+mu = initial_mu;
+mu_min = 1e-6;
+delta = delta_0;
+
+
 
 % Some basic setup code for you
 horizon = size(controls, 1);
@@ -105,9 +113,11 @@ for t = horizon:-1:1
     [~, cx, cu, cxx, cxu, cuu] = costfn(states(t,:).', controls(t,:).');
     [f, fx, fu, fxx, fxu, fuu] = dyn(states(t,:).', controls(t,:).');
     reg = regularizer;
+
+	delta = delta_0;
     
     % automatically increment regularizer if Quu not invertible
-    for i = 1:5
+    for i = 1:50
         % Get first-order derivatives of Q
         Qx = cx + (fx.')*Vx_next - reg*(fx.')*(states(t+1,:).' - f);
         Qu = cu + (fu.')*Vx_next - reg*(fu.')*(states(t+1,:).' - f);
@@ -125,12 +135,20 @@ for t = horizon:-1:1
             Qxu = cxu + (fx.')*Vxx_next*fu;
             Qux = Qxu.';
             Quu = cuu + (fu.')*Vxx_next*fu;
-        end
+		end
+		
+		Quu = (Quu + Quu.')/2;
+		%Quu = Quu + mu * eye(size(Quu));
 
         % check if Quu is positive definite
         if all(eig(Quu) > 1e-6) && rcond(Quu) > 1e-8
             break
-        end
+		end
+
+        % Increase mu if Quu is not positive definite
+        delta = max(delta_0, delta * delta_0);
+        mu = max(mu_min, mu * delta);
+
         if reg == 0 || isinf(reg)
             disp('Reg 0 or inf');
             break
@@ -140,17 +158,30 @@ for t = horizon:-1:1
             break
         end
         % otherwise, increment regularizer
-        reg = reg * 2
+        %reg = reg * 2;
 
     end % regularizer update loop
 
     % Get new controls
+	
     K = -Quu \ Qux;
     k = -Quu \ Qu;
 
     % Get new value function
-    Vx_next = Qx - (K.')*Quu*k;
-    Vxx_next = Qxx - (K.')*Quu*K;
+    %Vx_next = Qx - (K.')*Quu*k
+	Vx_next = Qx + K.'*Quu*k + K.'*Qu + Qux.'*k;
+	Vxx_next = Qxx + K.'*Quu*K + K.'*Qux + Qux.'*K;
+    %Vxx_next = Qxx - (K.')*Quu*K;
+
+    % Decrease mu for next iteration if successful
+    delta = min(1 / delta_0, delta / delta_0);
+    if mu * delta > mu_min
+        mu = mu * delta;
+    else
+        mu = 0;
+    end
+
+	%disp(sort(eig(Quu)))
 
     % Assign
     controller.K(t,:,:) = K;
@@ -162,10 +193,11 @@ end
 
 function out = fake_tensor_prod(A,B)
     out = 0;
-    for i = 1:6
+	n = length(A);
+    for i = 1:n
         out = out + squeeze(A(i)*B(i,:,:));
-    end
-    out = out/3;
+	end
+	out = out / 3;
 end
 
 %% Fill in your code below
