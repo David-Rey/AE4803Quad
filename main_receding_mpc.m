@@ -26,7 +26,7 @@ R = 1*eye(4);
 Qf = 10*Q;
 
 iters = 1;
-regularizer = 1;  % initial value. Will increment automatically
+regularizer = 10;  % initial value. Will increment automatically
 line_search_iters = 3;
 mode = "ilqr";
 initial_controls = 1.225*ones(planning_horizon / dt, 4);  % initialize to neutral thrust
@@ -35,35 +35,8 @@ ic = x0;
 % get cost functions
 [costfn, term_costfn] = quad_cost(Q, R, Qf, xf);
 
-
-
-%% MPC BELOW
-% PASTED FROM HW2 CODE:
-
-% n = size(ic, 1);
-% m = size(initial_controls, 2);
-% planning_horizon = size(initial_controls, 1) + 1; % h + 1.
-% 
-% states = zeros(sim_horizon, planning_horizon, n);
-% controls = initial_controls;
-% 
-% current_state = ic;
-% controls_history = zeros(sim_horizon, m);
-
-
-% pseudocode to help developing:
-% for t = 1:sim_horizon
-% run ddp for planning_horizon timesteps and ddp_iters iters
-% apply controller to get next state
-% current_state = next_state
-
 % run controller receding horizon
 controls = initial_controls;
-
-%[states, controls] = simmpc(ic, sim_horizon, initial_controls, iters, regularizer, dyn, costfn, term_costfn, 'ilqr', line_search_iters);
-%function [states, controls] = simmpc(ic, sim_horizon, initial_controls, ddp_iters, regularizer, dyn, costfn, term_costfn, mode)
-
-%plot_states = squeeze(states(:, 1, :));
 
 state_hist = zeros(n, sim_horizon);
 contol_hist = zeros(m, sim_horizon);

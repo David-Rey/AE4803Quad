@@ -70,6 +70,22 @@ hold on
 plot3(-3,-2,-1,"ro")
 plot3(5,3,2,"rx")
 
+legend(["Flight path","Start Point","Goal"])
+axis("equal")
+grid("on")
+xlabel('X Axis')
+ylabel('Y Axis')
+zlabel('Z Axis')
+title("Position")
+saveas(gcf, './barrier/3d_nobarriers.png')
+
+% now plot with barriers
+figure(2)
+plot3(xs,ys,zs)
+hold on
+plot3(-3,-2,-1,"ro")
+plot3(5,3,2,"rx")
+
 % plot barriers
 
 h1_surf = isosurface(X, Y, Z, H1, 0);
@@ -90,7 +106,7 @@ saveas(gcf, './barrier/3d.png')
 
 %% 2D plots
 
-figure(2)
+figure(3)
 
 plot(controller.controls(:,1))
 hold on
@@ -104,7 +120,7 @@ ylabel('Control Input (N)')
 title("Controls")
 saveas(gcf, './barrier/controls.png')
 
-figure(3)
+figure(4)
 
 plot(controller.states(:,4))
 hold on
@@ -117,7 +133,7 @@ ylabel('Angle (rad)')
 title("Attitude")
 saveas(gcf, './barrier/attitude.png')
 
-figure(4)
+figure(5)
 
 plot(controller.states(:, 10))
 grid on
@@ -130,7 +146,7 @@ ylabel('Angular Velocity (rad/s)')
 title("Body Rate")
 saveas(gcf, './barrier/ang_vel.png')
 
-figure(5)
+figure(6)
 
 plot(controller.states(:,1))
 grid on
@@ -143,7 +159,7 @@ title("Position")
 ylabel('Position (m)')
 saveas(gcf, './barrier/position.png')
 
-figure(6)
+figure(7)
 
 plot(controller.states(:,4))
 grid on
@@ -157,7 +173,7 @@ ylabel('Velocity (m/s)')
 saveas(gcf, './barrier/velocity.png')
 
 % barrier state plot
-figure(7)
+figure(8)
 plot(controller.states(:,13))
 grid on
 xlabel('Time (s)')
