@@ -80,7 +80,7 @@ numeric_fxx = {};
 numeric_fxu = {};
 numeric_fuu = {};
 
-for i = 1:12
+for i = 1:13
     numeric_fxx{i} = matlabFunction(hessian(f(i), state), Vars=vars);
     numeric_fxu{i} = matlabFunction(jacobian(jacobian(f(i), state), controls), Vars=vars);
     numeric_fuu{i} = matlabFunction(hessian(f(i), controls), Vars=vars);
@@ -106,6 +106,7 @@ function [wrapper_f, wrapper_fx, wrapper_fu, wrapper_fxx, wrapper_fxu, wrapper_f
     p = state(10);  % body roll pitch yaw
     q = state(11);
     r = state(12);
+    w = state(13);
 
     % Deconstruct control vector
     u1 = control(1);
@@ -120,19 +121,19 @@ function [wrapper_f, wrapper_fx, wrapper_fu, wrapper_fxx, wrapper_fxu, wrapper_f
     u3 = clip(u3,-bound,bound);
     u4 = clip(u4,-bound,bound);
 
-    wrapper_f = num_f(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,u1,u2,u3,u4);
-    wrapper_fx = num_fx(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,u1,u2,u3,u4);
-    wrapper_fu = num_fu(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,u1,u2,u3,u4);
-	%wrapper_f = num_f(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,u1,u2,u3,u4);
+    wrapper_f = num_f(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,w,u1,u2,u3,u4);
+    wrapper_fx = num_fx(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,w,u1,u2,u3,u4);
+    wrapper_fu = num_fu(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,w,u1,u2,u3,u4);
+	%wrapper_f = num_f(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,w,u1,u2,u3,u4);
 
-    wrapper_fxx = zeros(12, 12, 12);
-    wrapper_fxu = zeros(12, 12, 4);
-    wrapper_fuu = zeros(12, 4, 4);
+    wrapper_fxx = zeros(13, 13, 13);
+    wrapper_fxu = zeros(13, 13, 4);
+    wrapper_fuu = zeros(13, 4, 4);
 
     for i = 1:12
-        wrapper_fxx(i, :, :) = num_fxx{i}(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,u1,u2,u3,u4);
-        wrapper_fxu(i, :, :) = num_fxu{i}(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,u1,u2,u3,u4);
-        wrapper_fuu(i, :, :) = num_fuu{i}(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,u1,u2,u3,u4);
+        wrapper_fxx(i, :, :) = num_fxx{i}(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,w,u1,u2,u3,u4);
+        wrapper_fxu(i, :, :) = num_fxu{i}(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,w,u1,u2,u3,u4);
+        wrapper_fuu(i, :, :) = num_fuu{i}(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,w,u1,u2,u3,u4);
     end
 end
 

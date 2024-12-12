@@ -1,5 +1,5 @@
 function barrier_func = get_barrier_func()
-% x: state vec 
+% x: state vec, rank 12 or 13
 
 h1 = @(x) (x(1) - 2.2)^2 + (x(3) - 1)^2 - 1 + (x(8) - 2.2)^2;
 h2 = @(x) x(1)^2 + (x(2) + 0.2)^2 + x(3)^2 - 1;

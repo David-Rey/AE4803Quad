@@ -1,4 +1,4 @@
-function [controller, total_costs] = ddp(ic, initial_controls, iters, regularizer, dyn, costfn, term_costfn, mode, line_search_iters)
+function [controller, total_costs] = ddp(ic, initial_controls, iters, regularizer, dyn, costfn, term_costfn, mode, line_search_iters, xf)
 %DDP Solves for a locally optimal controller using iLQR / DDP.
 %
 %   ic: An n-by-1 state serving as the initial condition for the control
@@ -38,6 +38,10 @@ function [controller, total_costs] = ddp(ic, initial_controls, iters, regularize
 %   The default is to use iLQR.
 % line_search_iters (int): max num of line search iterations. Min 1.
 
+if nargin < 10
+    xf = zeros(12,1);
+end
+
 % Setup variables
 tf = size(initial_controls, 1);
 n = size(ic, 1);
@@ -56,21 +60,21 @@ alphas = exp(-(0:line_search_iters));
 
 %% Your code below
 
-[states, controls, best_costs] = fwd_pass(ic, controller, dyn, costfn, term_costfn, alphas(1));
+[states, controls, best_costs] = fwd_pass(ic, controller, dyn, costfn, term_costfn, alphas(1), xf);
 
 for i = 1:iters
-    [controller, ~] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode);
+    [controller, ~] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode, xf);
     %disp(sum(best_costs))
     for j = 1:line_search_iters-1
         % line search logic
-        [states, controls, new_costs] = fwd_pass(ic, controller, dyn, costfn, term_costfn, alphas(j));
+        [states, controls, new_costs] = fwd_pass(ic, controller, dyn, costfn, term_costfn, alphas(j), xf);
         if sum(new_costs) < sum(best_costs)
             best_costs = new_costs;
         end
 	end
 	
     % update to a newer controller
-    [controller, ~] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode);
+    [controller, ~] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode, xf);
     total_costs(i,1) = sum(best_costs); 
 end
 

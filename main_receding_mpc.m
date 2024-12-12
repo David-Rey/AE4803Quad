@@ -1,10 +1,10 @@
 clear; clc; close all;
 
 % Given parameters
-x0 = [-3, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % initial state
-xf = [5, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % final state
+x0 = [-3, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % initial state
+xf = [5, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % final state
 dt = 0.01;  % time step
-sim_horizon = 200;   % total sim time (iterations, i.e 50 => 0.5 seconds)
+sim_horizon = 500;   % total sim time (iterations, i.e 50 => 0.5 seconds)
 planning_horizon = 3;  % "look ahead" amount (seconds)
 n = length(x0);
 m = 4;
@@ -13,15 +13,16 @@ t_arr = (0:sim_horizon) * dt;
 
 
 % set up dynamics
-dyn = full_quadrotor(dt);
+dyn = full_quadrotor_barrier(dt, xf);
 
 % Tune here!
 pos_gain = 1;
 vel_gain = 1;
 ang_gain = 1;
 ang_vel_gain = 1;
-Q = diag([pos_gain, pos_gain, pos_gain, vel_gain, vel_gain, vel_gain, ang_gain, ang_gain, ang_gain, ang_vel_gain, ang_vel_gain, ang_vel_gain]);
-R = 2*eye(4);
+w_gain = 0;  % no barrier state
+Q = diag([pos_gain, pos_gain, pos_gain, vel_gain, vel_gain, vel_gain, ang_gain, ang_gain, ang_gain, ang_vel_gain, ang_vel_gain, ang_vel_gain, w_gain]);
+R = 1*eye(4);
 Qf = 10*Q;
 
 iters = 1;
@@ -117,38 +118,71 @@ plot3(5,3,2,"rx")
 legend(["Flight path","Start Point","Goal"])
 grid("on")
 axis("equal")
+title("Position")
+saveas(gcf, './receding/3d.png')
+
+
+%% 2D plots
 
 figure(2)
 plot(t_arr(1:end-1), contol_hist(1, :))
-title("Controls")
-xlabel("Time (s)")
-ylabel("Contol")
-grid on
 hold on
-
+grid on
 plot(t_arr(1:end-1), contol_hist(2, :))
 plot(t_arr(1:end-1), contol_hist(3, :))
 plot(t_arr(1:end-1), contol_hist(4, :))
 legend(["u1","u2","u3","u4"])
+xlabel('Time (s)')
+ylabel('Control Input (N)')
+title("Controls")
+saveas(gcf, './receding/controls.png')
 
 figure(3)
 plot(t_arr(1:end-1), state_hist(7, :))
-title("Attitude")
-xlabel("Time (s)")
-ylabel("Rad")
-grid on
 hold on
+grid on
 plot(t_arr(1:end-1), state_hist(8, :))
 plot(t_arr(1:end-1), state_hist(9, :))
 legend(["\phi","\theta","\psi"])
+xlabel('Time (s)')
+ylabel('Angle (rad)')
+title("Attitude")
+saveas(gcf, './receding/attitude.png')
 
 figure(4)
+
 plot(t_arr(1:end-1), state_hist(10, :))
-title("Body Rate")
-xlabel("Time (s)")
-ylabel("Rad/sec")
 grid on
 hold on
 plot(t_arr(1:end-1), state_hist(11, :))
 plot(t_arr(1:end-1), state_hist(12, :))
 legend(["p","q","r"])
+xlabel('Time (s)')
+ylabel('Angular Velocity (rad/s)')
+title("Body Rate")
+saveas(gcf, './receding/ang_vel.png')
+
+figure(5)
+
+plot(t_arr(1:end-1), state_hist(1, :))
+grid on
+hold on
+plot(t_arr(1:end-1), state_hist(2, :))
+plot(t_arr(1:end-1), state_hist(3, :))
+legend(["x","y","z"])
+xlabel('Time (s)')
+ylabel('Position (m)')
+title("Position")
+saveas(gcf, './receding/position.png')
+
+figure(6)
+plot(t_arr(1:end-1), state_hist(4, :))
+grid on
+hold on
+plot(t_arr(1:end-1), state_hist(5, :))
+plot(t_arr(1:end-1), state_hist(6, :))
+legend(["vx","vy","vz"])
+xlabel('Time (s)')
+ylabel('Velocity (m/s)')
+title("Velocity")
+saveas(gcf, './receding/velocity.png')
