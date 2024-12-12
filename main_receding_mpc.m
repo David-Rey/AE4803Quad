@@ -4,7 +4,7 @@ clear; clc; close all;
 x0 = [-3, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % initial state
 xf = [5, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % final state
 dt = 0.01;  % time step
-sim_horizon = 100;   % total sim time (iterations, i.e 50 => 0.5 seconds)
+sim_horizon = 600;   % total sim time (iterations, i.e 50 => 0.5 seconds)
 planning_horizon = 3;  % "look ahead" amount (seconds)
 n = length(x0);
 m = 4;
