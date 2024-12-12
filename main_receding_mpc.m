@@ -4,8 +4,10 @@ clear; clc; close all;
 x0 = [-3, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % initial state
 xf = [5, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % final state
 dt = 0.01;  % time step
-sim_horizon = 50;   % total sim time
-planning_horizon = 3;  % "look ahead" amount
+sim_horizon = 300;   % total sim time (iterations, i.e 50 => 0.5 seconds)
+planning_horizon = 3;  % "look ahead" amount (seconds)
+n = length(x0);
+m = 4;
 
 % set up dynamics
 dyn = full_quadrotor(dt);
@@ -17,9 +19,9 @@ ang_gain = 1;
 ang_vel_gain = 1;
 Q = diag([pos_gain, pos_gain, pos_gain, vel_gain, vel_gain, vel_gain, ang_gain, ang_gain, ang_gain, ang_vel_gain, ang_vel_gain, ang_vel_gain]);
 R = 2*eye(4);
-Qf = 100*Q;
+Qf = 10*Q;
 
-iters = 10;
+iters = 1;
 regularizer = 1;  % initial value. Will increment automatically
 line_search_iters = 3;
 mode = "ilqr";
@@ -59,6 +61,8 @@ controls = initial_controls;
 
 %plot_states = squeeze(states(:, 1, :));
 
+state_hist = zeros(n, sim_horizon);
+contol_hist = zeros(m, sim_horizon);
 
 current_state = ic;
 for t = 1:sim_horizon
@@ -75,7 +79,7 @@ for t = 1:sim_horizon
     controls = ubar + (K * (current_state - xbar.')).' + k;
 
     % increment state
-    [current_state, ~, ~, ~, ~, ~] = dyn(current_state, controls);
+    [current_state, ~, ~, ~, ~, ~] = dyn(current_state, controls(1, :));
 
     % warm start
     controls = controller.controls; %; controller.controls(end,:)];
@@ -83,6 +87,9 @@ for t = 1:sim_horizon
     % save vars
     % TODO: save here for plotting purposes
     states(t,:,:) = controller.states;
+
+    state_hist(:, t) = current_state;
+    contol_hist(:, t) = controls(1, :).';
 end
 
 total_costs(end)
@@ -90,9 +97,16 @@ final_cost = norm(controller.states(end,:) - xf)
 
 
 %% Plot result
-xs = controller.states(:,1);
-ys = controller.states(:,2);
-zs = controller.states(:,3);
+
+%disp(states(1, :, 1))
+
+%xs = controller.states(:,1);
+%ys = controller.states(:,2);
+%zs = controller.states(:,3);
+
+xs = state_hist(1, :);
+ys = state_hist(2, :);
+zs = state_hist(3, :);
 
 figure(1)
 title("Position")
@@ -102,20 +116,34 @@ hold on
 plot3(-3,-2,-1,"ro")
 plot3(5,3,2,"rx")
 legend(["Flight path","Start Point","Goal"])
+grid("on")
+axis("equal")
 
 figure(2)
 title("Controls")
-plot(controller.controls(:,1))
+plot(contol_hist(1, :))
+grid on
 hold on
-plot(controller.controls(:,2))
-plot(controller.controls(:,3))
-plot(controller.controls(:,4))
+
+plot(contol_hist(2, :))
+plot(contol_hist(3, :))
+plot(contol_hist(4, :))
 legend(["u1","u2","u3","u4"])
 
 figure(3)
 title("Attitude")
-plot(controller.states(:,4))
+plot(state_hist(7, :))
+grid on
 hold on
-plot(controller.states(:,5))
-plot(controller.states(:,6))
+plot(state_hist(8, :))
+plot(state_hist(9, :))
 legend(["\phi","\theta","\psi"])
+
+figure(4)
+title("Body Rate")
+plot(state_hist(10, :))
+grid on
+hold on
+plot(state_hist(11, :))
+plot(state_hist(12, :))
+legend(["p","q","r"])
