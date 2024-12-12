@@ -1,4 +1,4 @@
- function [controller, V] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode)
+ function [controller, V] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode, xf)
 %BACK_PASS The backward pass of iLQR / DDP.
 %
 %   states: A tf-by-n matrix where the row t contains the state of the
@@ -96,6 +96,10 @@ controller.states = states;
 controller.controls = controls;
 
 %% Fill in your code below
+
+% add w to 13th pos in state vec
+barrier_func = get_barrier_func();
+states(horizon, 13) = barrier_func(states(horizon, :)) - barrier_func(xf);
 
 % Initialize with final values
 [~, cx, ~, Q, ~, ~] = costfn(states(horizon,:).', controls(horizon,:).');

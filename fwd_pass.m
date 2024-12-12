@@ -1,4 +1,4 @@
-function [states, controls, costs] = fwd_pass(ic, controller, dynamics_wrapper, costfn, term_costfn, alpha)
+function [states, controls, costs] = fwd_pass(ic, controller, dynamics_wrapper, costfn, term_costfn, alpha, xf)
 %FWD_PASS Forward Pass for iLQR / DDP.
 %   This function computes the forward pass for the current control law.
 %
@@ -62,6 +62,9 @@ controls = zeros(tf, m);
 costs = zeros(tf + 1, 1);
 
 states(1, :) = ic.';
+% update w for initial state
+barrier_func = get_barrier_func();
+states(1,13) = barrier_func(ic) - barrier_func(xf);
 
 %% Your Code Below
 

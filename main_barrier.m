@@ -1,20 +1,21 @@
 clear; clc; close all;
 
 % Given parameters
-x0 = [-3, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % initial state
-xf = [5, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % final state
+x0 = [-3, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % initial state. Added w
+xf = [5, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % final state. Added w
 tf = 8;  % final time
 dt = 0.01;  % time step
 
 % set up dynamics
-dyn = full_quadrotor(dt);
+dyn = full_quadrotor_barrier(dt, xf);  % now needs xf too 
 
 % Tune here!
 pos_gain = 1;
 vel_gain = 1;
 ang_gain = 1;
 ang_vel_gain = 1;
-Q = diag([pos_gain, pos_gain, pos_gain, vel_gain, vel_gain, vel_gain, ang_gain, ang_gain, ang_gain, ang_vel_gain, ang_vel_gain, ang_vel_gain]);
+w_gain = 10;
+Q = diag([pos_gain, pos_gain, pos_gain, vel_gain, vel_gain, vel_gain, ang_gain, ang_gain, ang_gain, ang_vel_gain, ang_vel_gain, ang_vel_gain, w_gain]);
 R = 0.8*eye(4);
 Qf = 180*Q;
 
@@ -31,7 +32,7 @@ ic = x0;
 % form: [cost, cx, cxx] = term_costfn(state)
 
 % run controller
-[controller, total_costs] = ddp(ic, initial_controls, iters, regularizer, dyn, costfn, term_costfn, mode, line_search_iters);
+[controller, total_costs] = ddp(ic, initial_controls, iters, regularizer, dyn, costfn, term_costfn, mode, line_search_iters, xf);
 
 total_costs(end)
 final_cost = norm(controller.states(end,:) - xf)
