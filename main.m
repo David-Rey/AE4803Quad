@@ -48,7 +48,7 @@ ys = controller.states(:,2);
 zs = controller.states(:,3);
 
 figure(1)
-title("Position")
+
 plot3(xs,ys,zs)
 hold on
 
@@ -57,31 +57,76 @@ plot3(5,3,2,"rx")
 legend(["Flight path","Start Point","Goal"])
 axis("equal")
 grid("on")
+xlabel('X Axis')
+ylabel('Y Axis')
+zlabel('Z Axis')
+title("Position")
+saveas(gcf, './normal/3d.png')
+
+%% 2D plots
 
 figure(2)
-title("Controls")
+
 plot(controller.controls(:,1))
-grid on
 hold on
+grid on
 plot(controller.controls(:,2))
 plot(controller.controls(:,3))
 plot(controller.controls(:,4))
 legend(["u1","u2","u3","u4"])
+xlabel('Time (s)')
+ylabel('Control Input (N)')
+title("Controls")
+saveas(gcf, './normal/controls.png')
 
 figure(3)
-title("Attitude")
-plot(controller.states(:,7))
-grid on
+
+plot(controller.states(:,4))
 hold on
-plot(controller.states(:,8))
-plot(controller.states(:,9))
+grid on
+plot(controller.states(:,5))
+plot(controller.states(:,6))
 legend(["\phi","\theta","\psi"])
+xlabel('Time (s)')
+ylabel('Angle (rad)')
+title("Attitude")
+saveas(gcf, './normal/attitude.png')
 
 figure(4)
-title("Body Rate")
+
 plot(controller.states(:, 10))
 grid on
 hold on
 plot(controller.states(:, 11))
 plot(controller.states(:, 12))
 legend(["p","q","r"])
+xlabel('Time (s)')
+ylabel('Angular Velocity (rad/s)')
+title("Body Rate")
+saveas(gcf, './normal/ang_vel.png')
+
+figure(5)
+
+plot(controller.states(:,1))
+grid on
+hold on
+plot(controller.states(:,2))
+plot(controller.states(:,3))
+legend(["x","y","z"])
+xlabel('Time (s)')
+ylabel('Position (m)')
+title("Position")
+saveas(gcf, './normal/position.png')
+
+figure(6)
+
+plot(controller.states(:,4))
+grid on
+hold on
+plot(controller.states(:,5))
+plot(controller.states(:,6))
+legend(["vx","vy","vz"])
+xlabel('Time (s)')
+title("Velocity")
+ylabel('Velocity (m/s)')
+saveas(gcf, './normal/velocity.png')

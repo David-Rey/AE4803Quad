@@ -62,43 +62,105 @@ H1 = h1(X, Y, Z);
 H2 = h2(X, Y, Z);
 H3 = h3(X, Y, Z);
 
-% plot trajectory
+%% plot trajectory
 figure(1)
-title("Position")
+
 plot3(xs,ys,zs)
 hold on
-
-% plot barriers
-isosurface(X, Y, Z, H1, 0);
-isosurface(X, Y, Z, H2, 0);
-isosurface(X, Y, Z, H3, 0);
-
 plot3(-3,-2,-1,"ro")
 plot3(5,3,2,"rx")
+
+% plot barriers
+
+h1_surf = isosurface(X, Y, Z, H1, 0);
+h2_surf = isosurface(X, Y, Z, H2, 0);
+h3_surf = isosurface(X, Y, Z, H3, 0);
+p1 = patch(h1_surf, 'FaceColor', 'red', 'EdgeColor', 'none', 'FaceAlpha', 0.5);
+p2 = patch(h2_surf, 'FaceColor', 'green', 'EdgeColor', 'none', 'FaceAlpha', 0.5);
+p3 = patch(h3_surf, 'FaceColor', 'blue', 'EdgeColor', 'none', 'FaceAlpha', 0.5);
+
 legend(["Flight path","Start Point","Goal"])
 axis("equal")
 grid("on")
 xlabel('X Axis')
 ylabel('Y Axis')
 zlabel('Z Axis')
+title("Position")
+saveas(gcf, './barrier/3d.png')
 
-
-
-
+%% 2D plots
 
 figure(2)
-title("Controls")
+
 plot(controller.controls(:,1))
 hold on
+grid on
 plot(controller.controls(:,2))
 plot(controller.controls(:,3))
 plot(controller.controls(:,4))
 legend(["u1","u2","u3","u4"])
+xlabel('Time (s)')
+ylabel('Control Input (N)')
+title("Controls")
+saveas(gcf, './barrier/controls.png')
 
 figure(3)
-title("Attitude")
+
 plot(controller.states(:,4))
 hold on
+grid on
 plot(controller.states(:,5))
 plot(controller.states(:,6))
 legend(["\phi","\theta","\psi"])
+xlabel('Time (s)')
+ylabel('Angle (rad)')
+title("Attitude")
+saveas(gcf, './barrier/attitude.png')
+
+figure(4)
+
+plot(controller.states(:, 10))
+grid on
+hold on
+plot(controller.states(:, 11))
+plot(controller.states(:, 12))
+legend(["p","q","r"])
+xlabel('Time (s)')
+ylabel('Angular Velocity (rad/s)')
+title("Body Rate")
+saveas(gcf, './barrier/ang_vel.png')
+
+figure(5)
+
+plot(controller.states(:,1))
+grid on
+hold on
+plot(controller.states(:,2))
+plot(controller.states(:,3))
+legend(["x","y","z"])
+xlabel('Time (s)')
+title("Position")
+ylabel('Position (m)')
+saveas(gcf, './barrier/position.png')
+
+figure(6)
+
+plot(controller.states(:,4))
+grid on
+hold on
+plot(controller.states(:,5))
+plot(controller.states(:,6))
+legend(["vx","vy","vz"])
+xlabel('Time (s)')
+title("Velocity")
+ylabel('Velocity (m/s)')
+saveas(gcf, './barrier/velocity.png')
+
+% barrier state plot
+figure(7)
+plot(controller.states(:,13))
+grid on
+xlabel('Time (s)')
+ylabel('Barrier State')
+title("Barrier State")
+saveas(gcf, './barrier/barrier_state.png')
