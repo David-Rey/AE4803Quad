@@ -5,6 +5,7 @@ x0 = [-3, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % initial state
 xf = [5, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % final state
 tf = 8;  % final time
 dt = 0.01;  % time step
+t_arr = 0:dt:tf;
 
 % set up dynamics
 dyn = full_quadrotor(dt);
@@ -47,8 +48,10 @@ ys = controller.states(:,2);
 zs = controller.states(:,3);
 
 figure(1)
-title("Position")
 plot3(xs,ys,zs)
+xlabel("X")
+ylabel("Y")
+zlabel("Z")
 hold on
 
 plot3(-3,-2,-1,"ro")
@@ -58,29 +61,35 @@ axis("equal")
 grid("on")
 
 figure(2)
+plot(t_arr(1:end-1), controller.controls(:,1))
 title("Controls")
-plot(controller.controls(:,1))
+xlabel("Time (s)")
+ylabel("Contol")
 grid on
 hold on
-plot(controller.controls(:,2))
-plot(controller.controls(:,3))
-plot(controller.controls(:,4))
+plot(t_arr(1:end-1), controller.controls(:,2))
+plot(t_arr(1:end-1), controller.controls(:,3))
+plot(t_arr(1:end-1), controller.controls(:,4))
 legend(["u1","u2","u3","u4"])
 
 figure(3)
+plot(t_arr, controller.states(:,7))
 title("Attitude")
-plot(controller.states(:,7))
+xlabel("Time (s)")
+ylabel("Rad")
 grid on
 hold on
-plot(controller.states(:,8))
-plot(controller.states(:,9))
+plot(t_arr, controller.states(:,8))
+plot(t_arr, controller.states(:,9))
 legend(["\phi","\theta","\psi"])
 
 figure(4)
+plot(t_arr, controller.states(:, 10))
 title("Body Rate")
-plot(controller.states(:, 10))
+xlabel("Time (s)")
+ylabel("Rad/sec")
 grid on
 hold on
-plot(controller.states(:, 11))
-plot(controller.states(:, 12))
+plot(t_arr, controller.states(:, 11))
+plot(t_arr, controller.states(:, 12))
 legend(["p","q","r"])

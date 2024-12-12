@@ -4,10 +4,13 @@ clear; clc; close all;
 x0 = [-3, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % initial state
 xf = [5, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % final state
 dt = 0.01;  % time step
-sim_horizon = 300;   % total sim time (iterations, i.e 50 => 0.5 seconds)
+sim_horizon = 200;   % total sim time (iterations, i.e 50 => 0.5 seconds)
 planning_horizon = 3;  % "look ahead" amount (seconds)
 n = length(x0);
 m = 4;
+
+t_arr = (0:sim_horizon) * dt;
+
 
 % set up dynamics
 dyn = full_quadrotor(dt);
@@ -98,19 +101,15 @@ final_cost = norm(controller.states(end,:) - xf)
 
 %% Plot result
 
-%disp(states(1, :, 1))
-
-%xs = controller.states(:,1);
-%ys = controller.states(:,2);
-%zs = controller.states(:,3);
-
 xs = state_hist(1, :);
 ys = state_hist(2, :);
 zs = state_hist(3, :);
 
 figure(1)
-title("Position")
 plot3(xs,ys,zs)
+xlabel("X")
+ylabel("Y")
+zlabel("Z")
 hold on
 
 plot3(-3,-2,-1,"ro")
@@ -120,30 +119,36 @@ grid("on")
 axis("equal")
 
 figure(2)
+plot(t_arr(1:end-1), contol_hist(1, :))
 title("Controls")
-plot(contol_hist(1, :))
+xlabel("Time (s)")
+ylabel("Contol")
 grid on
 hold on
 
-plot(contol_hist(2, :))
-plot(contol_hist(3, :))
-plot(contol_hist(4, :))
+plot(t_arr(1:end-1), contol_hist(2, :))
+plot(t_arr(1:end-1), contol_hist(3, :))
+plot(t_arr(1:end-1), contol_hist(4, :))
 legend(["u1","u2","u3","u4"])
 
 figure(3)
+plot(t_arr(1:end-1), state_hist(7, :))
 title("Attitude")
-plot(state_hist(7, :))
+xlabel("Time (s)")
+ylabel("Rad")
 grid on
 hold on
-plot(state_hist(8, :))
-plot(state_hist(9, :))
+plot(t_arr(1:end-1), state_hist(8, :))
+plot(t_arr(1:end-1), state_hist(9, :))
 legend(["\phi","\theta","\psi"])
 
 figure(4)
+plot(t_arr(1:end-1), state_hist(10, :))
 title("Body Rate")
-plot(state_hist(10, :))
+xlabel("Time (s)")
+ylabel("Rad/sec")
 grid on
 hold on
-plot(state_hist(11, :))
-plot(state_hist(12, :))
+plot(t_arr(1:end-1), state_hist(11, :))
+plot(t_arr(1:end-1), state_hist(12, :))
 legend(["p","q","r"])
