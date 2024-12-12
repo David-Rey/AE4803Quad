@@ -60,6 +60,7 @@ grid("on")
 figure(2)
 title("Controls")
 plot(controller.controls(:,1))
+grid on
 hold on
 plot(controller.controls(:,2))
 plot(controller.controls(:,3))
@@ -68,8 +69,18 @@ legend(["u1","u2","u3","u4"])
 
 figure(3)
 title("Attitude")
-plot(controller.states(:,4))
+plot(controller.states(:,7))
+grid on
 hold on
-plot(controller.states(:,5))
-plot(controller.states(:,6))
+plot(controller.states(:,8))
+plot(controller.states(:,9))
 legend(["\phi","\theta","\psi"])
+
+figure(4)
+title("Body Rate")
+plot(controller.states(:, 10))
+grid on
+hold on
+plot(controller.states(:, 11))
+plot(controller.states(:, 12))
+legend(["p","q","r"])
