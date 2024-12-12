@@ -1,4 +1,4 @@
- function [controller, V] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode)
+ function [controller, V] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode, xf)
 %BACK_PASS The backward pass of iLQR / DDP.
 %
 %   states: A tf-by-n matrix where the row t contains the state of the
@@ -75,6 +75,14 @@ if nargin < 6
     regularizer = 0;
 end
 
+initial_mu = 1e-2;
+delta_0 = 2;
+
+mu = initial_mu;
+mu_min = 1e-6;
+delta = delta_0;
+
+
 
 % Some basic setup code for you
 horizon = size(controls, 1);
@@ -88,6 +96,10 @@ controller.states = states;
 controller.controls = controls;
 
 %% Fill in your code below
+
+% add w to 13th pos in state vec
+barrier_func = get_barrier_func();
+states(horizon, 13) = barrier_func(states(horizon, :)) - barrier_func(xf);
 
 % Initialize with final values
 [~, cx, ~, Q, ~, ~] = costfn(states(horizon,:).', controls(horizon,:).');
@@ -104,51 +116,90 @@ for t = horizon:-1:1
     % Evaluate cost and function
     [~, cx, cu, cxx, cxu, cuu] = costfn(states(t,:).', controls(t,:).');
     [f, fx, fu, fxx, fxu, fuu] = dyn(states(t,:).', controls(t,:).');
+    reg = regularizer;
 
-    % Get first-order derivatives of Q
-    Qx = cx + (fx.')*Vx_next - regularizer*(fx.')*(states(t+1,:).' - f);
-    Qu = cu + (fu.')*Vx_next - regularizer*(fu.')*(states(t+1,:).' - f);
+	delta = delta_0;
+    
+    % automatically increment regularizer if Quu not invertible
+    for i = 1:1
+        % Get first-order derivatives of Q
+        Qx = cx + (fx.')*Vx_next - reg*(fx.')*(states(t+1,:).' - f);
+        Qu = cu + (fu.')*Vx_next - reg*(fu.')*(states(t+1,:).' - f);
+    
+        if strcmp(mode, 'ddp')
+            % Get second-order derivatives of Q
+            Qxx = cxx + (fx.')*Vxx_next*fx + fake_tensor_prod(Vx_next,fxx);% + reg*(fx.')*fx;
+            Qxu = cxu + (fx.')*(Vxx_next + reg * eye(length(Qxx)))*fu + fake_tensor_prod(Vx_next,fxu);
+            Qux = Qxu.';
+            Quu = cuu + (fu.')*(Vxx_next + reg * eye(length(Qxx)))*fu + fake_tensor_prod(Vx_next,fuu);
+    
+        elseif strcmp(mode,'ilqr')
+            % Get second-order derivatives of Q without tensor prod
+            Qxx = cxx + (fx.')*Vxx_next*fx;
+            Qxu = cxu + (fx.')*Vxx_next*fu;
+            Qux = Qxu.';
+            Quu = cuu + (fu.')*Vxx_next*fu;
+		end
+		
+		Quu = (Quu + Quu.')/2;
+		%Quu = Quu + mu * eye(size(Quu));
 
-    if strcmp(mode, 'ddp')
-        % Get second-order derivatives of Q
-        Qxx = cxx + (fx.')*Vxx_next*fx + fake_tensor_prod(Vx_next,fxx) + regularizer*(fx.')*fx;
-        Qxu = cxu + (fx.')*Vxx_next*fu + fake_tensor_prod(Vx_next,fxu) + regularizer*(fx.')*(fu);
-        Qux = Qxu.';
-        Quu = cuu + (fu.')*Vxx_next*fu + fake_tensor_prod(Vx_next,fuu) + regularizer*(fu.')*(fu);
+        % check if Quu is positive definite
+        if all(eig(Quu) > 1e-6) && rcond(Quu) > 1e-13
+            break
+		end
 
-    elseif strcmp(mode,'ilqr')
-        % Get second-order derivatives of Q without tensor prod
-        Qxx = cxx + (fx.')*Vxx_next*fx;
-        Qxu = cxu + (fx.')*Vxx_next*fu;
-        Qux = Qxu.';
-        Quu = cuu + (fu.')*Vxx_next*fu;
-    end
+        % Increase mu if Quu is not positive definite
+        delta = max(delta_0, delta * delta_0);
+        mu = max(mu_min, mu * delta);
+
+        if reg == 0 || isinf(reg)
+            disp('Reg 0 or inf');
+            break
+        end
+        if isnan(rcond(Quu))
+            disp('NaN rcond(Quu)');
+            break
+        end
+        % otherwise, increment regularizer
+        %reg = reg * 2;
+
+    end % regularizer update loop
 
     % Get new controls
-    K = -inv(Quu)*Qux;
-    k = -inv(Quu)*Qu;
+	
+    K = -Quu \ Qux;
+    k = -Quu \ Qu;
 
     % Get new value function
-    Vx_next = Qx - (K.')*Quu*k;
-    Vxx_next = Qxx - (K.')*Quu*K;
+	Vx_next = Qx + K.'*Quu*k + K.'*Qu + Qux.'*k;
+	Vxx_next = Qxx + K.'*Quu*K + K.'*Qux + Qux.'*K;
+
+    % Decrease mu for next iteration if successful
+    delta = min(1 / delta_0, delta / delta_0);
+    if mu * delta > mu_min
+        mu = mu * delta;
+    else
+        mu = 0;
+    end
+
+	%disp(sort(eig(Quu)))
 
     % Assign
     controller.K(t,:,:) = K;
     controller.k(t,:,:) = k;
 end
 
-
-
-
-V = 0; % don't bother defining V
+V = -0.5 * (Qu.' * pinv(Quu) * Qu);  % cost to go
 end
 
 function out = fake_tensor_prod(A,B)
     out = 0;
-    for i = 1:6
+	n = length(A);
+    for i = 1:n
         out = out + squeeze(A(i)*B(i,:,:));
-    end
-    out = out/3;
+	end
+	out = out / 3;
 end
 
 %% Fill in your code below

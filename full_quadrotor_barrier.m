@@ -1,4 +1,4 @@
-function [dyn] = full_quadrotor(dt)
+function [dyn] = full_quadrotor_barrier(dt, xf)
 %   Detailed explanation goes here
 
 % Get parameters
@@ -10,15 +10,18 @@ Ixx = 0.0032;
 Iyy = 0.0032;
 Izz = 0.0055;
 
-syms x y z phi theta ps p q r vx vy vz u1 u2 u3 u4
+syms x y z phi theta ps p q r vx vy vz u1 u2 u3 u4 w;  % psi called "ps" for namespace reasons
 
-coord = [x; y; z; phi; theta; ps];
-vel = [vx; vy; vz; p; q; r];
-state = [coord; vel];
+pos = [x; y; z];
+coord_vel = [vx; vy; vz];
+euler_angle = [phi; theta; ps];
+body_rate = [p; q; r];
+state = [pos; coord_vel; euler_angle; body_rate; w];
 controls = [u1; u2; u3; u4];
 vars = [state; controls];
 
 %% Get equations of motion
+% Linear EOM first
 % Starting with R
 % Define individual rotation matrices
 R1_phi = [1, 0, 0;
@@ -37,19 +40,35 @@ R3_psi = [cos(ps), sin(ps), 0;
 R = R1_phi * R2_theta * R3_psi;
 
 % Linear acceleration
-lin_acc = (1/m)*R*[0;0; u1 + u2 + u3 + u4] + [0;0;-m*g];
+lin_acc = (1/m)*R*[0;0; u1 + u2 + u3 + u4] + [0;0;-g];
+
+%% Rotational EOM
 
 % Rotational acceleration by Euler's eqn
-rot_acc = [(1/Ixx)*(sqrt(2)/2)*(u1+u3-u2-u4)*l - (Izz - Iyy)*q*r;
-    (1/Iyy)*(sqrt(2)/2)*(u3+u4-u1-u2)*l - (Izz - Ixx)*p*r;
+rot_acc = [(1/Ixx)*((sqrt(2)/2)*(u1+u3-u2-u4)*l - (Izz - Iyy)*q*r);
+    (1/Iyy)*((sqrt(2)/2)*(u3+u4-u1-u2)*l - (Izz - Ixx)*p*r);
     (1/Izz)*kt*(u1+u4-u2-u3)];
 
 % Set eom
 eom = [lin_acc; rot_acc];
 
-f = [coord + dt * vel;
-     vel + dt * eom];
+% body rates to euler rates
+P = [1, tan(theta)*sin(phi), tan(theta)*cos(phi);
+     0, cos(phi), -sin(phi);
+     0, sin(phi)/cos(theta), cos(phi)/cos(theta)];
 
+% Euler integrate to get next state
+f = [pos + dt * coord_vel;
+    coord_vel + dt * lin_acc;
+    euler_angle + dt * P * body_rate;
+    body_rate + dt * rot_acc;
+    0];  % placeholder
+
+% now update barrier state based on new state
+barrier_func = get_barrier_func();
+f(13) = barrier_func(f) - barrier_func(xf);
+
+% take derivatives and convert to matlab functions
 fx = jacobian(f, state);
 fu = jacobian(f, controls);
 
@@ -61,7 +80,7 @@ numeric_fxx = {};
 numeric_fxu = {};
 numeric_fuu = {};
 
-for i = 1:12
+for i = 1:13
     numeric_fxx{i} = matlabFunction(hessian(f(i), state), Vars=vars);
     numeric_fxu{i} = matlabFunction(jacobian(jacobian(f(i), state), controls), Vars=vars);
     numeric_fuu{i} = matlabFunction(hessian(f(i), controls), Vars=vars);
@@ -87,6 +106,7 @@ function [wrapper_f, wrapper_fx, wrapper_fu, wrapper_fxx, wrapper_fxu, wrapper_f
     p = state(10);  % body roll pitch yaw
     q = state(11);
     r = state(12);
+    w = state(13);
 
     % Deconstruct control vector
     u1 = control(1);
@@ -101,18 +121,19 @@ function [wrapper_f, wrapper_fx, wrapper_fu, wrapper_fxx, wrapper_fxu, wrapper_f
     u3 = clip(u3,-bound,bound);
     u4 = clip(u4,-bound,bound);
 
-    wrapper_f = num_f(x,y,z,phi,theta,psi,vx,vy,vz,p,q,r,u1,u2,u3,u4);
-    wrapper_fx = num_fx(x,y,z,phi,theta,psi,vx,vy,vz,p,q,r,u1,u2,u3,u4);
-    wrapper_fu = num_fu(x,y,z,phi,theta,psi,vx,vy,vz,p,q,r,u1,u2,u3,u4);
+    wrapper_f = num_f(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,w,u1,u2,u3,u4);
+    wrapper_fx = num_fx(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,w,u1,u2,u3,u4);
+    wrapper_fu = num_fu(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,w,u1,u2,u3,u4);
+	%wrapper_f = num_f(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,w,u1,u2,u3,u4);
 
-    wrapper_fxx = zeros(12, 12, 12);
-    wrapper_fxu = zeros(12, 12, 4);
-    wrapper_fuu = zeros(12, 4, 4);
+    wrapper_fxx = zeros(13, 13, 13);
+    wrapper_fxu = zeros(13, 13, 4);
+    wrapper_fuu = zeros(13, 4, 4);
 
     for i = 1:12
-        wrapper_fxx(i, :, :) = num_fxx{i}(x,y,z,phi,theta,psi,vx,vy,vz,p,q,r,u1,u2,u3,u4);
-        wrapper_fxu(i, :, :) = num_fxu{i}(x,y,z,phi,theta,psi,vx,vy,vz,p,q,r,u1,u2,u3,u4);
-        wrapper_fuu(i, :, :) = num_fuu{i}(x,y,z,phi,theta,psi,vx,vy,vz,p,q,r,u1,u2,u3,u4);
+        wrapper_fxx(i, :, :) = num_fxx{i}(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,w,u1,u2,u3,u4);
+        wrapper_fxu(i, :, :) = num_fxu{i}(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,w,u1,u2,u3,u4);
+        wrapper_fuu(i, :, :) = num_fuu{i}(x,y,z,vx,vy,vz,phi,theta,psi,p,q,r,w,u1,u2,u3,u4);
     end
 end
 
