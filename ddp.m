@@ -38,6 +38,10 @@ function [controller, total_costs] = ddp(ic, initial_controls, iters, regularize
 %   The default is to use iLQR.
 % line_search_iters (int): max num of line search iterations. Min 1.
 
+if nargin < 10
+    xf = zeros(12,1);
+end
+
 % Setup variables
 tf = size(initial_controls, 1);
 n = size(ic, 1);

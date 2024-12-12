@@ -1,8 +1,8 @@
 clear; clc; close all;
 
 % Given parameters
-x0 = [-3, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % initial state
-xf = [5, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % final state
+x0 = [-3, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % initial state
+xf = [5, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % final state
 dt = 0.01;  % time step
 sim_horizon = 300;   % total sim time (iterations, i.e 50 => 0.5 seconds)
 planning_horizon = 3;  % "look ahead" amount (seconds)
@@ -10,14 +10,15 @@ n = length(x0);
 m = 4;
 
 % set up dynamics
-dyn = full_quadrotor(dt);
+dyn = full_quadrotor_barrier(dt, xf);
 
 % Tune here!
 pos_gain = 1;
 vel_gain = 1;
 ang_gain = 1;
 ang_vel_gain = 1;
-Q = diag([pos_gain, pos_gain, pos_gain, vel_gain, vel_gain, vel_gain, ang_gain, ang_gain, ang_gain, ang_vel_gain, ang_vel_gain, ang_vel_gain]);
+w_gain = 0;  % no barrier state
+Q = diag([pos_gain, pos_gain, pos_gain, vel_gain, vel_gain, vel_gain, ang_gain, ang_gain, ang_gain, ang_vel_gain, ang_vel_gain, ang_vel_gain, w_gain]);
 R = 2*eye(4);
 Qf = 10*Q;
 
