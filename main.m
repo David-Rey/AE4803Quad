@@ -5,6 +5,7 @@ x0 = [-3, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % initial state
 xf = [5, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % final state
 tf = 8;  % final time
 dt = 0.01;  % time step
+t_arr = 0:dt:tf;
 
 % set up dynamics
 dyn = full_quadrotor_barrier(dt, xf);
@@ -62,12 +63,16 @@ saveas(gcf, './normal/3d.png')
 
 figure(2)
 
-plot(controller.controls(:,1))
-hold on
+plot(t_arr(1:end-1), controller.controls(:,1))
+title("Controls")
+xlabel("Time (s)")
+ylabel("Contol")
 grid on
-plot(controller.controls(:,2))
-plot(controller.controls(:,3))
-plot(controller.controls(:,4))
+hold on
+plot(t_arr(1:end-1), controller.controls(:,2))
+plot(t_arr(1:end-1), controller.controls(:,3))
+plot(t_arr(1:end-1), controller.controls(:,4))
+
 legend(["u1","u2","u3","u4"])
 xlabel('Time (s)')
 ylabel('Control Input (N)')
@@ -75,12 +80,15 @@ title("Controls")
 saveas(gcf, './normal/controls.png')
 
 figure(3)
-
-plot(controller.states(:,4))
-hold on
+plot(t_arr, controller.states(:,7))
+title("Attitude")
+xlabel("Time (s)")
+ylabel("Rad")
 grid on
-plot(controller.states(:,5))
-plot(controller.states(:,6))
+hold on
+plot(t_arr, controller.states(:,8))
+plot(t_arr, controller.states(:,9))
+
 legend(["\phi","\theta","\psi"])
 xlabel('Time (s)')
 ylabel('Angle (rad)')
@@ -88,12 +96,14 @@ title("Attitude")
 saveas(gcf, './normal/attitude.png')
 
 figure(4)
-
-plot(controller.states(:, 10))
+plot(t_arr, controller.states(:, 10))
+title("Body Rate")
+xlabel("Time (s)")
+ylabel("Rad/sec")
 grid on
 hold on
-plot(controller.states(:, 11))
-plot(controller.states(:, 12))
+plot(t_arr, controller.states(:, 11))
+plot(t_arr, controller.states(:, 12))
 legend(["p","q","r"])
 xlabel('Time (s)')
 ylabel('Angular Velocity (rad/s)')
@@ -101,12 +111,11 @@ title("Body Rate")
 saveas(gcf, './normal/ang_vel.png')
 
 figure(5)
-
-plot(controller.states(:,1))
+plot(t_arr, controller.states(:,1))
 grid on
 hold on
-plot(controller.states(:,2))
-plot(controller.states(:,3))
+plot(t_arr, controller.states(:,2))
+plot(t_arr, controller.states(:,3))
 legend(["x","y","z"])
 xlabel('Time (s)')
 ylabel('Position (m)')
@@ -114,8 +123,7 @@ title("Position")
 saveas(gcf, './normal/position.png')
 
 figure(6)
-
-plot(controller.states(:,4))
+plot(t_arr, controller.states(:,4))
 grid on
 hold on
 plot(controller.states(:,5))

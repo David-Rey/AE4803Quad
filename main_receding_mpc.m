@@ -9,6 +9,9 @@ planning_horizon = 3;  % "look ahead" amount (seconds)
 n = length(x0);
 m = 4;
 
+t_arr = (0:sim_horizon) * dt;
+
+
 % set up dynamics
 dyn = full_quadrotor_barrier(dt, xf);
 
@@ -19,7 +22,7 @@ ang_gain = 1;
 ang_vel_gain = 1;
 w_gain = 0;  % no barrier state
 Q = diag([pos_gain, pos_gain, pos_gain, vel_gain, vel_gain, vel_gain, ang_gain, ang_gain, ang_gain, ang_vel_gain, ang_vel_gain, ang_vel_gain, w_gain]);
-R = 2*eye(4);
+R = 1*eye(4);
 Qf = 10*Q;
 
 iters = 1;
@@ -72,19 +75,15 @@ final_cost = norm(controller.states(end,:) - xf)
 
 %% Plot result
 
-%disp(states(1, :, 1))
-
-%xs = controller.states(:,1);
-%ys = controller.states(:,2);
-%zs = controller.states(:,3);
-
 xs = state_hist(1, :);
 ys = state_hist(2, :);
 zs = state_hist(3, :);
 
 figure(1)
-
 plot3(xs,ys,zs)
+xlabel("X")
+ylabel("Y")
+zlabel("Z")
 hold on
 
 plot3(-3,-2,-1,"ro")
@@ -99,13 +98,12 @@ saveas(gcf, './receding/3d.png')
 %% 2D plots
 
 figure(2)
-
-plot(controller.controls(:,1))
+plot(t_arr(1:end-1), contol_hist(1, :))
 hold on
 grid on
-plot(controller.controls(:,2))
-plot(controller.controls(:,3))
-plot(controller.controls(:,4))
+plot(t_arr(1:end-1), contol_hist(2, :))
+plot(t_arr(1:end-1), contol_hist(3, :))
+plot(t_arr(1:end-1), contol_hist(4, :))
 legend(["u1","u2","u3","u4"])
 xlabel('Time (s)')
 ylabel('Control Input (N)')
@@ -113,12 +111,11 @@ title("Controls")
 saveas(gcf, './receding/controls.png')
 
 figure(3)
-
-plot(controller.states(:,4))
+plot(t_arr(1:end-1), state_hist(7, :))
 hold on
 grid on
-plot(controller.states(:,5))
-plot(controller.states(:,6))
+plot(t_arr(1:end-1), state_hist(8, :))
+plot(t_arr(1:end-1), state_hist(9, :))
 legend(["\phi","\theta","\psi"])
 xlabel('Time (s)')
 ylabel('Angle (rad)')
@@ -127,11 +124,11 @@ saveas(gcf, './receding/attitude.png')
 
 figure(4)
 
-plot(controller.states(:, 10))
+plot(t_arr(1:end-1), state_hist(10, :))
 grid on
 hold on
-plot(controller.states(:, 11))
-plot(controller.states(:, 12))
+plot(t_arr(1:end-1), state_hist(11, :))
+plot(t_arr(1:end-1), state_hist(12, :))
 legend(["p","q","r"])
 xlabel('Time (s)')
 ylabel('Angular Velocity (rad/s)')
@@ -140,11 +137,11 @@ saveas(gcf, './receding/ang_vel.png')
 
 figure(5)
 
-plot(controller.states(:,1))
+plot(t_arr(1:end-1), state_hist(1, :))
 grid on
 hold on
-plot(controller.states(:,2))
-plot(controller.states(:,3))
+plot(t_arr(1:end-1), state_hist(2, :))
+plot(t_arr(1:end-1), state_hist(3, :))
 legend(["x","y","z"])
 xlabel('Time (s)')
 ylabel('Position (m)')
@@ -152,12 +149,11 @@ title("Position")
 saveas(gcf, './receding/position.png')
 
 figure(6)
-
-plot(controller.states(:,4))
+plot(t_arr(1:end-1), state_hist(4, :))
 grid on
 hold on
-plot(controller.states(:,5))
-plot(controller.states(:,6))
+plot(t_arr(1:end-1), state_hist(5, :))
+plot(t_arr(1:end-1), state_hist(6, :))
 legend(["vx","vy","vz"])
 xlabel('Time (s)')
 ylabel('Velocity (m/s)')
