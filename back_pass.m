@@ -117,7 +117,7 @@ for t = horizon:-1:1
 	delta = delta_0;
     
     % automatically increment regularizer if Quu not invertible
-    for i = 1:50
+    for i = 1:1
         % Get first-order derivatives of Q
         Qx = cx + (fx.')*Vx_next - reg*(fx.')*(states(t+1,:).' - f);
         Qu = cu + (fu.')*Vx_next - reg*(fu.')*(states(t+1,:).' - f);
@@ -141,7 +141,7 @@ for t = horizon:-1:1
 		%Quu = Quu + mu * eye(size(Quu));
 
         % check if Quu is positive definite
-        if all(eig(Quu) > 1e-6) && rcond(Quu) > 1e-8
+        if all(eig(Quu) > 1e-6) && rcond(Quu) > 1e-13
             break
 		end
 
@@ -168,10 +168,8 @@ for t = horizon:-1:1
     k = -Quu \ Qu;
 
     % Get new value function
-    %Vx_next = Qx - (K.')*Quu*k
 	Vx_next = Qx + K.'*Quu*k + K.'*Qu + Qux.'*k;
 	Vxx_next = Qxx + K.'*Quu*K + K.'*Qux + Qux.'*K;
-    %Vxx_next = Qxx - (K.')*Quu*K;
 
     % Decrease mu for next iteration if successful
     delta = min(1 / delta_0, delta / delta_0);

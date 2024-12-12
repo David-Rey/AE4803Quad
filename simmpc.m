@@ -1,4 +1,4 @@
-function [states, controls] = simmpc(ic, sim_horizon, initial_controls, ddp_iters, regularizer, dyn, costfn, term_costfn, mode)
+function [states, controls] = simmpc(ic, sim_horizon, initial_controls, ddp_iters, regularizer, dyn, costfn, term_costfn, mode, line_search_iters)
 %SIMMPC Simulation of receding-horizon model-predictive control.
 %
 %   This function simulates the execution of iLQR / DDP in a
@@ -89,7 +89,8 @@ controls_history = zeros(sim_horizon, m);
 
 for t = 1:sim_horizon
     % get controller
-    [controller, ~] = ddp(current_state, controls, ddp_iters, regularizer, dyn, costfn, term_costfn, mode);
+    disp(t)
+    [controller, ~] = ddp(current_state, controls, ddp_iters, regularizer, dyn, costfn, term_costfn, mode, line_search_iters);
     
     % add states and controls to the final output
     % states(t,:,:) = controller.states;

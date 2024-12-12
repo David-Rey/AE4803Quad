@@ -4,30 +4,32 @@ clear; clc; close all;
 x0 = [-3, -2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % initial state
 xf = [5, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0].';  % final state
 dt = 0.01;  % time step
-sim_horizon = 8;   % total sim time
+sim_horizon = 50;   % total sim time
 planning_horizon = 3;  % "look ahead" amount
 
 % set up dynamics
 dyn = full_quadrotor(dt);
 
 % Tune here!
-pos_gain = 100;
-vel_gain = 100;
-ang_gain = 10;
-ang_vel_gain = 10;
+pos_gain = 1;
+vel_gain = 1;
+ang_gain = 1;
+ang_vel_gain = 1;
 Q = diag([pos_gain, pos_gain, pos_gain, vel_gain, vel_gain, vel_gain, ang_gain, ang_gain, ang_gain, ang_vel_gain, ang_vel_gain, ang_vel_gain]);
-R = 15*eye(4);
+R = 2*eye(4);
 Qf = 100*Q;
 
 iters = 10;
 regularizer = 1;  % initial value. Will increment automatically
-line_search_iters = 10;
-mode = "ddp";
-initial_controls = 0.612*ones(planning_horizon / dt, 4);  % initialize to neutral thrust
+line_search_iters = 3;
+mode = "ilqr";
+initial_controls = 1.225*ones(planning_horizon / dt, 4);  % initialize to neutral thrust
 ic = x0;
 
 % get cost functions
 [costfn, term_costfn] = quad_cost(Q, R, Qf, xf);
+
+
 
 %% MPC BELOW
 % PASTED FROM HW2 CODE:
@@ -51,11 +53,20 @@ ic = x0;
 
 % run controller receding horizon
 controls = initial_controls;
+
+%[states, controls] = simmpc(ic, sim_horizon, initial_controls, iters, regularizer, dyn, costfn, term_costfn, 'ilqr', line_search_iters);
+%function [states, controls] = simmpc(ic, sim_horizon, initial_controls, ddp_iters, regularizer, dyn, costfn, term_costfn, mode)
+
+%plot_states = squeeze(states(:, 1, :));
+
+
 current_state = ic;
 for t = 1:sim_horizon
+    disp(t)
     % get controller
+    %if mod(t, 4)
     [controller, total_costs] = ddp(current_state, controls, iters, regularizer, dyn, costfn, term_costfn, mode, line_search_iters);
-
+    %end
     % use difference in current state and desired to get controls
     K = squeeze(controller.K(1,:,:));
     k = controller.k(1,:);

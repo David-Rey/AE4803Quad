@@ -24,8 +24,8 @@ Qf = 180*Q;
 
 iters = 13;
 regularizer = 1;  % initial value. Will increment automatically unless this is 0
-line_search_iters = 3;  % 1 for no line search
-mode = "ddp";
+line_search_iters = 2;  % 1 for no line search
+mode = "ilqr";
 initial_controls = 1.225*ones(tf / dt, 4);  % initialize to neutral thrust
 ic = x0;
 

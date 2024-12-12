@@ -60,7 +60,7 @@ alphas = exp(-(0:line_search_iters));
 
 for i = 1:iters
     [controller, ~] = back_pass(states, controls, dyn, costfn, term_costfn, regularizer, mode);
-    disp(sum(best_costs))
+    %disp(sum(best_costs))
     for j = 1:line_search_iters-1
         % line search logic
         [states, controls, new_costs] = fwd_pass(ic, controller, dyn, costfn, term_costfn, alphas(j));
