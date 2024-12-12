@@ -9,11 +9,6 @@ dt = 0.01;  % time step
 % set up dynamics
 dyn = full_quadrotor_barrier(dt, xf);
 
-% Tune here!
-% Q = 100.244*eye(length(x0));
-% R = 12.1*eye(4);
-% Qf = 37*eye(length(x0));
-
 pos_gain = 1;
 vel_gain = 1;
 ang_gain = 1;
